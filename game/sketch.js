@@ -99,7 +99,7 @@ const INVADERS_SPACING = 20;
 const INVADERS_ROWS = 3;
 const INVADERS_COLUMNS = 10;
 const INVADERS_HORIZONTAL_SPEED = .28;
-const INVADERS_VERTICAL_SPEED = .1;
+const INVADERS_VERTICAL_SPEED = .2;
 const PROJECTILE_SIZE = 15;
 const SHOT_PERFORMED_AT_ONCE_FROM_INVADERS = 3;
 const PAUSE_PETWEEN_RANDOM_SHOTS = 1000;
@@ -201,6 +201,9 @@ function processInvaders()
             invadersLeft++;
             moveInvader(invaders[column][row]);
             invaders[column][row].draw();
+
+            if(invaders[column][row].posY > CANVAS_HEIGHT - ship.heightY)
+                loose();
         }
 
     if(invadersLeft < 1)
