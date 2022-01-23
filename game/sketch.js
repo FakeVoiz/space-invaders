@@ -39,7 +39,6 @@ class Ship extends MovableObject
     {   
         let projectile = new Projectile(this.posX + 20, this.posY - this.heightY, PROJECTILE_SIZE, -1, .8);
         projectile.colideWithInvader = true;
-        projectile.collideWithShip = true;
         
         return projectile;
     }
@@ -57,6 +56,14 @@ class Invader extends MovableObject
     {
         fill(200, 0, 0);
         circle(this.posX, this.posY, this.size);
+    }
+
+    createProjectile()
+    {   
+        let projectile = new Projectile(this.posX, this.posY, PROJECTILE_SIZE, 1, .8);
+        projectile.collideWithShip = true;
+        
+        return projectile;
     }
 }
 
@@ -92,10 +99,13 @@ const INVADERS_SPACING = 20;
 const INVADERS_ROWS = 3;
 const INVADERS_COLUMNS = 11;
 const PROJECTILE_SIZE = 15;
+const SHOT_PERFORMED_AT_ONCE_FROM_INVADERS = 3;
+const PAUSE_PETWEEN_RANDOM_SHOTS = 1000;
 
 var currentTime = 0;
 var lastTime = 0;
 var deltaTime = 0;
+var timePassedFromLastRandomShot = 0;
 
 var ship = new Ship(CANVAS_WIDTH / 2, CANVAS_HEIGHT - 50, 50, 50);
 var invaders;
@@ -120,15 +130,13 @@ function keyPressed()
 
 function draw() 
 {
-    currentTime = Date.now();            
-    deltaTime = currentTime - lastTime;  
-    lastTime = currentTime;
+    processTime();
 
     background(0);
     processInput();
 
     ship.draw();
-    drawInvaders();
+    processInvaders();
     processCollisions();
     processProjectiles();
 }
@@ -168,14 +176,45 @@ function processInput()
     }
 }
 
-function drawInvaders()
+function processTime()
 {
+    currentTime = Date.now();            
+    deltaTime = currentTime - lastTime;  
+    lastTime = currentTime;
+
+    timePassedFromLastRandomShot += deltaTime;
+}
+
+function processInvaders()
+{
+    let invadersLeft = 0;
+
     for(let column = 0; column < invaders.length; column++)
-    {
         for(let row = 0; row < invaders[column].length; row++)
         {
+            invadersLeft++;
             invaders[column][row].draw();
         }
+
+    if(invadersLeft < 1)
+    {
+        win();
+        return;
+    }
+
+    if(timePassedFromLastRandomShot < PAUSE_PETWEEN_RANDOM_SHOTS)
+        return;
+
+    for(let shotNumber = 0; shotNumber < SHOT_PERFORMED_AT_ONCE_FROM_INVADERS; shotNumber++)
+    {
+        let randomCollmn = Math.floor(Math.random() * invaders.length);
+        let randomRow = Math.floor(Math.random() * invaders[randomCollmn].length);
+        let invader = invaders[randomCollmn][randomRow];
+        
+        if(invader)
+            projectiles.push(invader.createProjectile());
+        
+        timePassedFromLastRandomShot = 0;
     }
 }
 
@@ -242,7 +281,7 @@ function processCollisions()
                 if(!projectile)
                     break;
 
-                let collisionDistance = projectile.size / 2 + invader.size / 2;
+                let collisionDistance = projectile.size + invader.size / 2;
 
                 if(calculateDistance(projectile.posX, projectile.posY, invader.posX, invader.posY) < collisionDistance)
                 {
@@ -259,7 +298,7 @@ function checkCollisionBewtweenRectAndCircl(circPosX, circPosY, circSize, rectPo
     let dx = abs(circPosX - rectPosX) - rectWidth / 2;
     let dy = abs(circPosY - rectPosY) - rectHeight / 2;
 
-    if (dx > circSize / 2 || dy > circSize /2) 
+    if (dx > circSize / 2 || dy > circSize / 2) 
         return false;
     if (dx <= 0 || dy <= 0) 
         return true;
@@ -275,5 +314,9 @@ function calculateDistance(x1, y1, x2, y2)
 function loose()
 {
     console.log('Loose');
-    window.location.reload();
+}
+
+function win()
+{
+    console.log('win');
 }
