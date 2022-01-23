@@ -97,15 +97,20 @@ const TARGET_FRAME_RATE = 60;
 const INVADER_SIZE = 50;
 const INVADERS_SPACING = 20;
 const INVADERS_ROWS = 3;
-const INVADERS_COLUMNS = 11;
+const INVADERS_COLUMNS = 10;
+const INVADERS_HORIZONTAL_SPEED = .28;
+const INVADERS_VERTICAL_SPEED = .1;
 const PROJECTILE_SIZE = 15;
 const SHOT_PERFORMED_AT_ONCE_FROM_INVADERS = 3;
 const PAUSE_PETWEEN_RANDOM_SHOTS = 1000;
+const PAUSE_BETWEEN_CHANGING_HORIZONTAL_DIRECTION = 3000;
 
 var currentTime = 0;
 var lastTime = 0;
 var deltaTime = 0;
 var timePassedFromLastRandomShot = 0;
+var timePassedFromLastDirectionChanged = 0;
+var currentInvadersDirection = 1;
 
 var ship = new Ship(CANVAS_WIDTH / 2, CANVAS_HEIGHT - 50, 50, 50);
 var invaders;
@@ -149,7 +154,7 @@ function createInvaders()
     for(let column = 0; column < INVADERS_ROWS; column++)
     {
         let invadersRow = [];
-        invaderPos[0] = INVADER_SIZE;
+        invaderPos[0] = INVADER_SIZE * 2;
         for(let row = 0; row < INVADERS_COLUMNS; row++)
         {
             invadersRow.push(new Invader(invaderPos[0], invaderPos[1], INVADER_SIZE))
@@ -183,6 +188,7 @@ function processTime()
     lastTime = currentTime;
 
     timePassedFromLastRandomShot += deltaTime;
+    timePassedFromLastDirectionChanged += deltaTime;
 }
 
 function processInvaders()
@@ -193,6 +199,7 @@ function processInvaders()
         for(let row = 0; row < invaders[column].length; row++)
         {
             invadersLeft++;
+            moveInvader(invaders[column][row]);
             invaders[column][row].draw();
         }
 
@@ -218,11 +225,22 @@ function processInvaders()
     }
 }
 
+function moveInvader(invader)
+{
+    if(timePassedFromLastDirectionChanged > PAUSE_BETWEEN_CHANGING_HORIZONTAL_DIRECTION)
+    {
+        currentInvadersDirection = -currentInvadersDirection;
+        timePassedFromLastDirectionChanged = 0;
+    }
+
+    invader.posX += currentInvadersDirection * INVADERS_HORIZONTAL_SPEED;
+    invader.posY += INVADERS_VERTICAL_SPEED;
+}
+
 function processProjectiles()
 {
     for(let i = 0; i < projectiles.length; i++)
     {
-
         let isProjectileOutOfScene = projectiles[i].posX < 0 
         || projectiles[i].posX > CANVAS_WIDTH
         || projectiles[i].posY < 0 
