@@ -36,9 +36,10 @@ class Ship extends MovableObject
     }
 
     createProjectile()
-    {
-        let projectile = new Projectile(this.posX, this.posY - this.heightY, PROJECTILE_SIZE, -1, .8);
+    {   
+        let projectile = new Projectile(this.posX + 20, this.posY - this.heightY, PROJECTILE_SIZE, -1, .8);
         projectile.colideWithInvader = true;
+        projectile.collideWithShip = true;
         
         return projectile;
     }
@@ -67,13 +68,13 @@ class Projectile extends MovableObject
         this.size = size;
         this.dirY = Math.sign(dirY);
         this.speed = Math.abs(speed);
-        this.colideWithPlayer = false;
-        this.colideWithInvader = false;
+        this.collideWithShip = false;
+        this.collideWithInvader = false;
     }
 
     draw()
     {
-        fill(0, 0, 200);
+        fill(255, 255, 0);
         circle(this.posX, this.posY, this.size);
     }
 
@@ -90,7 +91,7 @@ const INVADER_SIZE = 50;
 const INVADERS_SPACING = 20;
 const INVADERS_ROWS = 3;
 const INVADERS_COLUMNS = 11;
-const PROJECTILE_SIZE = 20;
+const PROJECTILE_SIZE = 15;
 
 var currentTime = 0;
 var lastTime = 0;
@@ -205,9 +206,30 @@ function processCollisions()
     {
         let projectile = projectiles[projI];
 
+        if(projectile.collideWithShip)
+        {
+            let isProjectileCollidedWithShip = 
+            checkCollisionBewtweenRectAndCircl
+            (
+                projectile.posX,
+                projectile.posY,
+                projectile.size, 
+                ship.posX,
+                ship.posY, 
+                ship.widthX,
+                ship.heightY
+            );
+
+            if(isProjectileCollidedWithShip)
+            {
+                loose();
+                return;
+            }
+        }
 
         if(!projectile.colideWithInvader)
             continue;
+
         for(let column = 0; column < invaders.length; column++)
         {
             if(!projectile)
@@ -220,7 +242,7 @@ function processCollisions()
                 if(!projectile)
                     break;
 
-                let collisionDistance = projectile.size + invader.size;
+                let collisionDistance = projectile.size / 2 + invader.size / 2;
 
                 if(calculateDistance(projectile.posX, projectile.posY, invader.posX, invader.posY) < collisionDistance)
                 {
@@ -232,7 +254,26 @@ function processCollisions()
     }
 }
 
+function checkCollisionBewtweenRectAndCircl(circPosX, circPosY, circSize, rectPosX, rectPosY, rectWidth, rectHeight)
+{
+    let dx = abs(circPosX - rectPosX) - rectWidth / 2;
+    let dy = abs(circPosY - rectPosY) - rectHeight / 2;
+
+    if (dx > circSize / 2 || dy > circSize /2) 
+        return false;
+    if (dx <= 0 || dy <= 0) 
+        return true;
+
+    return (dx * dx + dy * dy <= Math.pow(circSize / 2, 2));
+}
+
 function calculateDistance(x1, y1, x2, y2)
 {
     return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+}
+
+function loose()
+{
+    console.log('Loose');
+    window.location.reload();
 }
