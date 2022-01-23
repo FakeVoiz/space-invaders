@@ -1,13 +1,5 @@
 'use strict'
 
-const CANVAS_HEIGHT = 800;
-const CANVAS_WIDTH = 800;
-const TARGET_FRAME_RATE = 60;
-
-var currentTime = 0;
-var lastTime = 0;
-var deltaTime = 0;
-
 class MovableObject
 {
     constructor(posX, posY)
@@ -42,41 +34,86 @@ class Ship extends MovableObject
         fill(0, 200, 0);
         rect(this.posX, this.posY, this.widthX, this.heightY)
     }
+
+    createProjectile()
+    {
+        let projectile = new Projectile(this.posX, this.posY - this.heightY, PROJECTILE_SIZE, -1, .8);
+        projectile.colideWithInvader = true;
+        
+        return projectile;
+    }
 }
 
 class Invader extends MovableObject
 {
     constructor(posX, posY, size)
     {
-        super(posX, posY)
+        super(posX, posY);
         this.size = size;
     }
 
     draw()
     {
         fill(200, 0, 0);
-        circle(this.posX, this.posY, this.size)
+        circle(this.posX, this.posY, this.size);
     }
 }
 
+class Projectile extends MovableObject
+{
+    constructor(posX, posY, size, dirY, speed)
+    {
+        super(posX, posY);
+        this.size = size;
+        this.dirY = Math.sign(dirY);
+        this.speed = Math.abs(speed);
+        this.colideWithPlayer = false;
+        this.colideWithInvader = false;
+    }
+
+    draw()
+    {
+        fill(0, 0, 200);
+        circle(this.posX, this.posY, this.size);
+    }
+
+    move()
+    {
+        this.posY += this.speed * this.dirY * deltaTime;
+    }
+}
+
+const CANVAS_HEIGHT = 800;
+const CANVAS_WIDTH = 800;
+const TARGET_FRAME_RATE = 60;
+const INVADER_SIZE = 50;
+const INVADERS_SPACING = 20;
+const INVADERS_ROWS = 3;
+const INVADERS_COLUMNS = 11;
+const PROJECTILE_SIZE = 20;
+
+var currentTime = 0;
+var lastTime = 0;
+var deltaTime = 0;
+
 var ship = new Ship(CANVAS_WIDTH / 2, CANVAS_HEIGHT - 50, 50, 50);
+var invaders;
+var projectiles = [];
 
 function setup() 
 {
     createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
     frameRate(TARGET_FRAME_RATE);
-}
- 
-function processInput()
-{
-    if(keyIsDown(RIGHT_ARROW))
-    {
-        ship.moveRight(.3);
-    }
 
-    if(keyIsDown(LEFT_ARROW))
+    invaders = createInvaders();
+}
+
+function keyPressed()
+{
+    if(keyCode == UP_ARROW)
     {
-        ship.moveLeft(.3);
+        console.log("Shoot");
+        projectiles.push(ship.createProjectile());
     }
 }
 
@@ -90,4 +127,112 @@ function draw()
     processInput();
 
     ship.draw();
+    drawInvaders();
+    processCollisions();
+    processProjectiles();
+}
+
+function createInvaders()
+{
+    let invadersArray = [];
+    let invaderPos = [INVADER_SIZE, INVADER_SIZE];
+
+    for(let column = 0; column < INVADERS_ROWS; column++)
+    {
+        let invadersRow = [];
+        invaderPos[0] = INVADER_SIZE;
+        for(let row = 0; row < INVADERS_COLUMNS; row++)
+        {
+            invadersRow.push(new Invader(invaderPos[0], invaderPos[1], INVADER_SIZE))
+            invaderPos[0] += INVADER_SIZE + INVADERS_SPACING;
+        }
+
+        invadersArray.push(invadersRow);
+        invaderPos[1] += INVADER_SIZE + INVADERS_SPACING;
+    }
+
+    return invadersArray;
+}
+
+function processInput()
+{
+    if(keyIsDown(RIGHT_ARROW))
+    {
+        ship.moveRight(.3);
+    }
+
+    if(keyIsDown(LEFT_ARROW))
+    {
+        ship.moveLeft(.3);
+    }
+}
+
+function drawInvaders()
+{
+    for(let column = 0; column < invaders.length; column++)
+    {
+        for(let row = 0; row < invaders[column].length; row++)
+        {
+            invaders[column][row].draw();
+        }
+    }
+}
+
+function processProjectiles()
+{
+    for(let i = 0; i < projectiles.length; i++)
+    {
+
+        let isProjectileOutOfScene = projectiles[i].posX < 0 
+        || projectiles[i].posX > CANVAS_WIDTH
+        || projectiles[i].posY < 0 
+        || projectiles[i].posY > CANVAS_HEIGHT
+        
+        if(isProjectileOutOfScene)
+        {
+            projectiles.splice(i, 1);
+            continue;
+        }
+
+        projectiles[i].move();
+        projectiles[i].draw();
+    }
+}
+
+function processCollisions()
+{
+    for(let projI = 0; projI < projectiles.length; projI++)
+    {
+        let projectile = projectiles[projI];
+
+
+        if(!projectile.colideWithInvader)
+            continue;
+        for(let column = 0; column < invaders.length; column++)
+        {
+            if(!projectile)
+            break;
+
+            for(let row = 0; row < invaders[column].length; row++)
+            {
+                let invader = invaders[column][row];
+
+                if(!projectile)
+                    break;
+
+                let collisionDistance = projectile.size + invader.size;
+
+                if(calculateDistance(projectile.posX, projectile.posY, invader.posX, invader.posY) < collisionDistance)
+                {
+                    projectiles.splice(projI, 1);
+                    invaders[column].splice(row, 1);
+                }
+            }
+        }
+    }
+}
+
+function calculateDistance(x1, y1, x2, y2)
+{
+    return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
 }
