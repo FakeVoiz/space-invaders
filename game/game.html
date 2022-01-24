@@ -125,7 +125,7 @@ const PROJECTILE_SIZE = 15;
 const SHOT_PERFORMED_AT_ONCE_FROM_INVADERS = 3;
 const PAUSE_PETWEEN_RANDOM_SHOTS = 1000;
 const PAUSE_BETWEEN_CHANGING_HORIZONTAL_DIRECTION = 3000;
-const PAUSE_BETWEEN_SHIP_SHOTS = 300;
+const PAUSE_BETWEEN_SHIP_SHOTS = 500;
 
 var currentTime = 0;
 var lastTime = 0;
@@ -133,6 +133,7 @@ var deltaTime = 0;
 var timePassedFromLastRandomShot = 0;
 var timePassedFromLastDirectionChanged = 0;
 var timePassedFromLastShipShot = 0;
+var timeOfBegginingOfTheGame = Date.now();
 var currentInvadersDirection = 1;
 
 var levelIsEnded = false;
@@ -392,8 +393,16 @@ function win()
     return;
 
     levelIsEnded = true;
+    sendTimeStats((Date.now() - timeOfBegginingOfTheGame) / 1000);
     location.href='http://localhost:3000/win';
 }
+
+function sendTimeStats(data)
+{
+  let requestData= {value:data}
+  return fetch("http://localhost:3000/data", {method: "POST", headers: {'Content-Type': 'application/json'}, body: JSON.stringify(requestData)});
+}
+
 </script>
 
 <script type="text/javascript">
