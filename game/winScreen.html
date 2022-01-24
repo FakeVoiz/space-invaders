@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+</head>
+<body>
+    <style>
+        body
+        {
+            background-color: greenyellow;
+            font-size: 69pt;
+            text-align: center;
+        }
+        button
+        {
+            background-color: crimson;
+            font-size: 40pt;
+            width: 60%;
+        }
+    </style>
+    <p>YOU WON</p>
+    <button type="button" onclick="startTheGame()">Play again!</button> 
+
+    <script type="text/javascript">
+        function startTheGame()
+        {
+            console.log('game');
+            location.href='http://localhost:3000/game';
+        }
+    </script>
+</body>
+</html>
