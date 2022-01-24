@@ -42,6 +42,19 @@ class Ship extends MovableObject
         
         return projectile;
     }
+
+    moveRight(speed)
+    {
+        this.posX += speed * deltaTime;
+        this.posX = clamp(this.posX, 0, CANVAS_WIDTH - this.widthX);
+    
+    }
+
+    moveLeft(speed)
+    {
+        this.posX -= speed * deltaTime;
+        this.posX = clamp(this.posX, 0, CANVAS_WIDTH - this.widthX);
+    }
 }
 
 class Invader extends MovableObject
@@ -104,12 +117,14 @@ const PROJECTILE_SIZE = 15;
 const SHOT_PERFORMED_AT_ONCE_FROM_INVADERS = 3;
 const PAUSE_PETWEEN_RANDOM_SHOTS = 1000;
 const PAUSE_BETWEEN_CHANGING_HORIZONTAL_DIRECTION = 3000;
+const PAUSE_BETWEEN_SHIP_SHOTS = 1000;
 
 var currentTime = 0;
 var lastTime = 0;
 var deltaTime = 0;
 var timePassedFromLastRandomShot = 0;
 var timePassedFromLastDirectionChanged = 0;
+var timePassedFromLastShipShot = 0;
 var currentInvadersDirection = 1;
 
 var ship = new Ship(CANVAS_WIDTH / 2, CANVAS_HEIGHT - 50, 50, 50);
@@ -128,8 +143,11 @@ function keyPressed()
 {
     if(keyCode == UP_ARROW)
     {
-        console.log("Shoot");
+        if(timePassedFromLastShipShot < PAUSE_BETWEEN_SHIP_SHOTS)
+            return;
+
         projectiles.push(ship.createProjectile());
+        timePassedFromLastShipShot = 0;
     }
 }
 
@@ -179,6 +197,15 @@ function processInput()
     {
         ship.moveLeft(.3);
     }
+
+    if(keyIsDown(UP_ARROW))
+    {
+        if(timePassedFromLastShipShot < PAUSE_BETWEEN_SHIP_SHOTS)
+            return;
+
+        projectiles.push(ship.createProjectile());
+        timePassedFromLastShipShot = 0;
+    }
 }
 
 function processTime()
@@ -189,6 +216,7 @@ function processTime()
 
     timePassedFromLastRandomShot += deltaTime;
     timePassedFromLastDirectionChanged += deltaTime;
+    timePassedFromLastShipShot += deltaTime;
 }
 
 function processInvaders()
@@ -331,6 +359,14 @@ function calculateDistance(x1, y1, x2, y2)
 {
     return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
 }
+
+function clamp(num, min, max) {
+    return num <= min 
+      ? min 
+      : num >= max 
+        ? max 
+        : num
+  }
 
 function loose()
 {
